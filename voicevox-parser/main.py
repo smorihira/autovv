@@ -88,7 +88,7 @@ def _snake_to_camel(obj):
 
 
 def build_audio_item(parsed_data, config):
-    char_key = parsed_data["type"]
+    char_key = parsed_data.character
     char_conf = config.get(
         char_key, config.get("default", {"style_id": 3, "speed": 1.0})
     )
@@ -97,14 +97,14 @@ def build_audio_item(parsed_data, config):
     speaker_uuid = char_conf.get("speaker_uuid", "7ffcb7ce-00ec-4bdc-82cd-45a8889e43ff")
     audio_key = str(uuid.uuid4())
 
-    query = fetch_audio_query(parsed_data["text"], style_id)
+    query = fetch_audio_query(parsed_data.text, style_id)
     if query:
         query["speedScale"] = float(char_conf.get("speed", 1.0))
-        query["prePhonemeLength"] = parsed_data["pre_pause"]
-        query["postPhonemeLength"] = parsed_data["post_pause"]
+        query["prePhonemeLength"] = parsed_data.pre_pause
+        query["postPhonemeLength"] = parsed_data.post_pause
 
     item = {
-        "text": parsed_data["text"],
+        "text": parsed_data.text,
         "voice": {
             "engineId": "074fc39e-678b-4c13-8916-ffca8d505d1d",
             "speakerId": speaker_uuid,

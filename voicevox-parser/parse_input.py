@@ -10,7 +10,7 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
    - 三重括弧 「「「...」」」 -> 玄野武宏 (takehiro)
    - 二重括弧 「「...」」     -> 春日部つむぎ (tsumugi)
    - 一重括弧 「...」         -> ずんだもん (zundamon)
-   - 括弧なし                 -> 四国めたん (metan)
+   - 括弧なし                 -> 四国めたん (metan_amaama)
    ※ 括弧の対応が正しくない場合（例: 「...」」）はエラーを出力します。
 
 3. ポーズ時間 (間) の指定:
@@ -18,6 +18,7 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
    - 指定範囲: 0.00 ～ 2.00 (秒)
    - デフォルト値: 0.10
    - カンマが足りない、または値が空の場合はデフォルト値が適用されます。
+   - 括弧「」内のカンマはテキストの一部として扱われます。
 
 4. 場面転換:
    - 2行以上の連続空白行がある場合、その直前の台詞の後の間(post_pause)を 0.80 に設定する。
@@ -30,102 +31,137 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
 - （これは読まれません）          -> 無視
 """
 
-import re
+from dataclasses import dataclass
+
+# ── 定数 ──────────────────────────────────────────────
+
+PAUSE_DEFAULT = 0.10
+PAUSE_MIN = 0.00
+PAUSE_MAX = 2.00
+SCENE_BREAK_PAUSE = 0.80
+
+# キャラクター定義: (開き括弧, 閉じ括弧, キー名)
+# 深い括弧から順に判定する
+CHARACTER_BRACKETS = [
+    ("「「「", "」」」", "takehiro"),
+    ("「「", "」」", "tsumugi"),
+    ("「", "」", "zundamon"),
+]
+DEFAULT_CHARACTER = "metan_amaama"
+
+# コメント行の括弧ペア
+COMMENT_BRACKETS = [("(", ")"), ("（", "）")]
 
 
-def parse_line(line):
+# ── データ構造 ────────────────────────────────────────
+
+
+@dataclass
+class ParsedLine:
+    """解析済みの1行を表す構造体"""
+
+    character: str
+    text: str
+    pre_pause: float
+    post_pause: float
+
+
+# ── 内部関数 ──────────────────────────────────────────
+
+
+def _is_comment(line: str) -> bool:
+    """コメント行かどうかを判定する"""
+    return any(
+        line.startswith(open_b) and line.endswith(close_b)
+        for open_b, close_b in COMMENT_BRACKETS
+    )
+
+
+def _split_text_and_pauses(line: str) -> tuple[str, list[str]]:
     """
-    1行のテキストを解析し、構造化された辞書を返す。
-    解析不能な場合や無視対象の場合は None を返す。
+    テキスト部分とポーズ値部分を分離する。
+    括弧「」内のカンマはテキストの一部として扱う。
     """
-    line = line.strip()
+    last_bracket = line.rfind("」")
+    if last_bracket != -1:
+        text_part = line[: last_bracket + 1]
+        remainder = line[last_bracket + 1 :]
+        parts = [p.strip() for p in remainder.split(",")]
+        return text_part, parts[1:]  # 最初の空要素をスキップ
 
-    # 1. 無視ルールの判定
-    if not line:
-        return None
-
-    # コメント行の無視
-    if (line.startswith("(") and line.endswith(")")) or (
-        line.startswith("（") and line.endswith("）")
-    ):
-        return None
-
-    # 2. カンマで分割 (最大3パーツ)
+    # 括弧なし: 通常のカンマ分割
     parts = [p.strip() for p in line.split(",")]
-    raw_text = parts[0]
+    return parts[0], parts[1:]
 
-    # 3. ポーズ時間の解析
+
+def _parse_pause(value: str, default: float = PAUSE_DEFAULT) -> float:
+    """ポーズ値を解析する。空文字の場合はデフォルト値を返す。"""
+    if not value:
+        return default
     try:
-        pre_pause = get_pause_value(parts, 1, 0.10)
-        post_pause = get_pause_value(parts, 2, 0.10)
-    except ValueError as e:
-        raise ValueError(f"パースエラー: {e}")
-
-    # 4. バリデーション
-    if not (0.0 <= pre_pause <= 2.0) or not (0.0 <= post_pause <= 2.0):
-        raise ValueError(f"ポーズ時間は0.00から2.00の間で指定してください: {line}")
-
-    # 5. キャラクター判定
-    char_key, clean_text = identify_character_and_text(raw_text)
-
-    return {
-        "type": char_key,
-        "text": clean_text,
-        "pre_pause": pre_pause,
-        "post_pause": post_pause,
-    }
+        return float(value)
+    except ValueError:
+        raise ValueError(f"値 '{value}' を数値に変換できません。")
 
 
-def get_pause_value(parts, index, default):
+def _identify_character(text: str) -> tuple[str, str]:
     """
-    指定インデックスの値を取り出し、数値に変換する。
-    存在しない、または空文字の場合はデフォルト値を返す。
+    括弧の深さからキャラクターを判定し、
+    (キャラクターキー, 括弧を除去したテキスト) を返す。
     """
-    if len(parts) > index and parts[index] != "":
-        try:
-            val = float(parts[index])
-            return val
-        except ValueError:
-            raise ValueError(f"値 '{parts[index]}' を数値に変換できません。")
-    return default
+    for open_b, close_b, char_key in CHARACTER_BRACKETS:
+        if text.startswith(open_b) and text.endswith(close_b):
+            inner = text[len(open_b) : -len(close_b)]
+            return char_key, inner
 
-
-def identify_character_and_text(text):
-    """
-    括弧の深さを判定し、対応するキャラクターIDキーと、
-    括弧を除去した純粋なテキストを分離して返す。
-    """
-    # 判定パターンの定義 (深い括弧から順にマッチング)
-    patterns = [
-        (r"^「「「(.+)」」」$", "takehiro"),
-        (r"^「「(.+)」」$", "tsumugi"),
-        (r"^「(.+)」$", "zundamon"),
-    ]
-
-    for pattern, char_key in patterns:
-        match = re.match(pattern, text)
-        if match:
-            return char_key, match.group(1)
-
-    # 括弧が全くない、あるいは「で始まらない場合
     if not text.startswith("「"):
-        return "metan_amaama", text
+        return DEFAULT_CHARACTER, text
 
-    # 「 で始まっているが、閉じ括弧が合わない等のケース
     raise ValueError(
         f"括弧の形式が正しくありません (全角「」を使用してください): {text}"
     )
 
 
-SCENE_BREAK_PAUSE = 0.80
+# ── 公開関数 ──────────────────────────────────────────
 
 
-def parse_lines(lines):
+def parse_line(line: str) -> ParsedLine | None:
     """
-    複数行のテキストをまとめて解析し、構造化された辞書のリストを返す。
+    1行のテキストを解析し、ParsedLine を返す。
+    無視対象の行は None を返す。
+    """
+    line = line.strip()
+    if not line or _is_comment(line):
+        return None
+
+    text_part, pause_parts = _split_text_and_pauses(line)
+
+    pre_pause = _parse_pause(pause_parts[0] if len(pause_parts) > 0 else "")
+    post_pause = _parse_pause(pause_parts[1] if len(pause_parts) > 1 else "")
+
+    if not (PAUSE_MIN <= pre_pause <= PAUSE_MAX) or not (
+        PAUSE_MIN <= post_pause <= PAUSE_MAX
+    ):
+        raise ValueError(
+            f"ポーズ時間は{PAUSE_MIN:.2f}から{PAUSE_MAX:.2f}の間で指定してください: {line}"
+        )
+
+    character, clean_text = _identify_character(text_part)
+
+    return ParsedLine(
+        character=character,
+        text=clean_text,
+        pre_pause=pre_pause,
+        post_pause=post_pause,
+    )
+
+
+def parse_lines(lines: list[str]) -> list[ParsedLine]:
+    """
+    複数行のテキストをまとめて解析し、ParsedLine のリストを返す。
     2行以上の連続空白行は場面転換とみなし、直前の台詞の post_pause を上書きする。
     """
-    parsed_items = []
+    parsed_items: list[ParsedLine] = []
     blank_count = 0
 
     for line in lines:
@@ -137,7 +173,7 @@ def parse_lines(lines):
 
         if result is not None:
             if blank_count >= 2 and parsed_items:
-                parsed_items[-1]["post_pause"] = SCENE_BREAK_PAUSE
+                parsed_items[-1].post_pause = SCENE_BREAK_PAUSE
             parsed_items.append(result)
 
         blank_count = 0
