@@ -160,16 +160,22 @@ def parse_lines(lines: list[str]) -> list[ParsedLine]:
     """
     複数行のテキストをまとめて解析し、ParsedLine のリストを返す。
     2行以上の連続空白行は場面転換とみなし、直前の台詞の post_pause を上書きする。
+    パースエラーは行番号付きで報告し、該当行をスキップして処理を続行する。
     """
     parsed_items: list[ParsedLine] = []
     blank_count = 0
 
-    for line in lines:
+    for line_num, line in enumerate(lines, 1):
         if not line.strip():
             blank_count += 1
             continue
 
-        result = parse_line(line)
+        try:
+            result = parse_line(line)
+        except ValueError as e:
+            print(f"行{line_num}: {e}")
+            blank_count = 0
+            continue
 
         if result is not None:
             if blank_count >= 2 and parsed_items:

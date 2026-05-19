@@ -116,11 +116,14 @@ VOICEVOXエンジンが起動しました。
 
 ```
 voicevox-parser/
-├── main.py            # メイン処理（API呼び出し、vvproj生成、VOICEVOX起動）
-├── parse_input.py     # 入力テキストの解析ロジック
-├── characters.toml    # キャラクターごとの style_id・速度設定
-├── plot.txt           # 入力台本（ここに台本を書く）
-├── .env               # 出力先ディレクトリの設定
+├── main.py              # エントリポイント（設定読み込み・オーケストレーション）
+├── parse_input.py       # 入力テキストの解析ロジック
+├── voicevox_api.py      # VOICEVOX エンジン API 通信・エンジン起動/停止
+├── vvproj_builder.py    # .vvproj データ構築・保存
+├── app_control.py       # VOICEVOX GUI の終了・起動制御
+├── characters.toml      # キャラクターごとの style_id・速度設定
+├── plot.txt             # 入力台本（ここに台本を書く）
+├── .env                 # 出力先ディレクトリの設定
 └── README.md
 ```
 
@@ -151,6 +154,6 @@ speed = 1.30
 
 ## 注意事項
 
-- VOICEVOX のインストールパスが `/Applications/VOICEVOX.app` 以外の場合は `main.py` のパスを修正してください
-- VOICEVOX エンジンの API はデフォルトで `http://localhost:50021` を使用します
-- 生成される `.vvproj` の `appVersion` は `0.24.0` に設定されています
+- VOICEVOX のインストールパスが `/Applications/VOICEVOX.app` 以外の場合は `voicevox_api.py` の `ENGINE_PATH` を修正してください
+- VOICEVOX エンジンの API はデフォルトで `http://localhost:50021` を使用します（`voicevox_api.py` の `API_BASE`）
+- 生成される `.vvproj` の `appVersion` は `0.24.0` に設定されています（`vvproj_builder.py` の `APP_VERSION`）
