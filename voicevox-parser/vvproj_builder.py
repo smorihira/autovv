@@ -26,7 +26,9 @@ def _build_audio_item(parsed_data: ParsedLine, char_conf: dict) -> tuple[str, di
 
     query = fetch_audio_query(parsed_data.text, style_id)
     if query:
-        query["speedScale"] = float(char_conf.get("speed", 1.0))
+        query["speedScale"] = (
+            float(char_conf.get("speed", 1.0)) + parsed_data.speed_offset
+        )
         query["prePhonemeLength"] = parsed_data.pre_pause
         query["postPhonemeLength"] = parsed_data.post_pause
 

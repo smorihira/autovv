@@ -39,6 +39,7 @@ PAUSE_DEFAULT = 0.10
 PAUSE_MIN = 0.00
 PAUSE_MAX = 2.00
 SCENE_BREAK_PAUSE = 0.80
+SPEED_BOOST_ON_ZERO_PRE = 0.10  # pre_pause=0 のとき速度を上げる量
 
 # キャラクター定義: (開き括弧, 閉じ括弧, キー名)
 # 深い括弧から順に判定する
@@ -64,6 +65,7 @@ class ParsedLine:
     text: str
     pre_pause: float
     post_pause: float
+    speed_offset: float
 
 
 # ── 内部関数 ──────────────────────────────────────────
@@ -148,11 +150,14 @@ def parse_line(line: str) -> ParsedLine | None:
 
     character, clean_text = _identify_character(text_part)
 
+    speed_offset = SPEED_BOOST_ON_ZERO_PRE if pre_pause == 0.0 else 0.0
+
     return ParsedLine(
         character=character,
         text=clean_text,
         pre_pause=pre_pause,
         post_pause=post_pause,
+        speed_offset=speed_offset,
     )
 
 
