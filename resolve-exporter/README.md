@@ -89,12 +89,14 @@ shadowOpacity = 100
 
 ```
 resolve-exporter/
-  main.py           # オーケストレーション（設定読み込み → 走査 → 構築 → 出力）
-  scan_project.py   # WAV ファイル走査・ファイル名解析・テキスト読み込み
-  otio_builder.py   # OTIO クリップ・タイムライン構築
-  characters.toml   # キャラクター別字幕スタイル設定
-  voices/           # 入力ディレクトリ（WAV + TXT）
-  outputs/          # 出力ディレクトリ（.otio）
+├── main.py              # オーケストレーション（設定読み込み → 走査 → 構築 → 出力）
+├── config/
+│   └── characters.toml  # キャラクター別字幕スタイル設定
+├── src/
+│   ├── scan_project.py  # WAV ファイル走査・ファイル名解析・テキスト読み込み
+│   └── otio_builder.py  # OTIO クリップ・タイムライン構築
+├── voices/              # 入力ディレクトリ（WAV + TXT）
+└── outputs/             # 出力ディレクトリ（.otio）
 ```
 
 ## 既知の制限

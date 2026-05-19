@@ -14,15 +14,15 @@ except ImportError:
     print("エラー: このスクリプトは Python 3.11 以降で実行してください。")
     sys.exit(1)
 
-from otio_builder import build_timeline
-from scan_project import scan_project
+from src.otio_builder import build_timeline
+from src.scan_project import scan_project
 
 # ── 定数 ──────────────────────────────────────────────
 
 _ROOT = os.path.dirname(os.path.abspath(__file__))
 VOICES_DIR = os.path.join(_ROOT, "voices")
 OUTPUTS_DIR = os.path.join(_ROOT, "outputs")
-CONFIG_PATH = os.path.join(_ROOT, "characters.toml")
+CONFIG_PATH = os.path.join(_ROOT, "config", "characters.toml")
 
 
 # ── 設定読み込み ──────────────────────────────────────
