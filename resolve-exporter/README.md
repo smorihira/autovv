@@ -11,7 +11,8 @@ VOICEVOX で生成した WAV ファイルと対応するテキストファイル
 
 ### 1. 入力ファイルを配置
 
-`voices/<プロジェクト名>/` ディレクトリに、WAV ファイルと同名の `.txt` ファイルをペアで配置する。
+`voices/<プロジェクト名>/` ディレクトリ（リポジトリルート直下）に、WAV ファイルと同名の `.txt` ファイルをペアで配置する。
+voicevox-parser でプロジェクトを作成すると、このディレクトリが自動的に作成される。
 
 ```
 voices/my_project/
@@ -95,8 +96,10 @@ resolve-exporter/
 ├── src/
 │   ├── scan_project.py  # WAV ファイル走査・ファイル名解析・テキスト読み込み
 │   └── otio_builder.py  # OTIO クリップ・タイムライン構築
-├── voices/              # 入力ディレクトリ（WAV + TXT）
 └── outputs/             # 出力ディレクトリ（.otio）
+
+# リポジトリルートに共有ディレクトリ
+voices/                   # 入力ディレクトリ（WAV + TXT、voicevox-parser が自動作成）
 ```
 
 ## 既知の制限

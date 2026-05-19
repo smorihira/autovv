@@ -4,8 +4,8 @@ import json
 import uuid
 from pathlib import Path
 
-from parse_input import ParsedLine
-from voicevox_api import fetch_audio_query
+from src.parse_input import ParsedLine
+from src.voicevox_api import fetch_audio_query
 
 # ── 定数 ──────────────────────────────────────────────
 

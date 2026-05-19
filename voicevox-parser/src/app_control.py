@@ -4,7 +4,7 @@ import os
 import subprocess
 import time
 
-from voicevox_api import stop_engine
+from src.voicevox_api import stop_engine
 
 # ── 定数 ──────────────────────────────────────────────
 

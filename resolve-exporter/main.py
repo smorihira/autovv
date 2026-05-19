@@ -20,7 +20,8 @@ from src.scan_project import scan_project
 # ── 定数 ──────────────────────────────────────────────
 
 _ROOT = os.path.dirname(os.path.abspath(__file__))
-VOICES_DIR = os.path.join(_ROOT, "voices")
+_PROJECT_ROOT = os.path.dirname(_ROOT)
+VOICES_DIR = os.path.join(_PROJECT_ROOT, "voices")
 OUTPUTS_DIR = os.path.join(_ROOT, "outputs")
 CONFIG_PATH = os.path.join(_ROOT, "config", "characters.toml")
 

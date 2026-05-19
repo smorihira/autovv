@@ -74,6 +74,11 @@ def main():
     file_path = save_vvproj(vvproj_data, output_dir, project_name)
     print(f"プロジェクトを作成しました: {file_path}")
 
+    # resolve-exporter 用の voices ディレクトリを作成
+    voices_dir = _ROOT.parent / "voices" / project_name
+    voices_dir.mkdir(parents=True, exist_ok=True)
+    print(f"voices ディレクトリを作成しました: {voices_dir}")
+
     restart_with_project(file_path, engine_proc)
 
 
