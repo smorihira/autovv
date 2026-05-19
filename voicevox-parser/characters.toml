@@ -1,0 +1,24 @@
+# デフォルト設定（該当キャラがいない場合に使用）
+[default]
+style_id = 3
+speed = 1.0
+
+# なし：四国めたん（あまあま）
+[metan_amaama]
+style_id = 0
+speed = 1.35
+
+# 一重：ずんだもん（ノーマル）
+[zundamon]
+style_id = 3
+speed = 1.42
+
+# 二重：春日部つむぎ（ノーマル）
+[tsumugi]
+style_id = 8
+speed = 1.30
+
+# 三重：玄野武宏（ノーマル）
+[takehiro]
+style_id = 11
+speed = 1.30

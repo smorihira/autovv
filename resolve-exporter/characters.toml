@@ -1,0 +1,58 @@
+# ==============================================================================
+# VOICEVOX 動画生成スクリプト用 字幕スタイル設定ファイル (OTIO形式専用)
+# ==============================================================================
+# [各パラメータの説明]
+# font          : フォント名
+# fontSize      : フォントサイズ (pt)
+# fontColor     : 文字の色 (HEXカラーコード)
+# bold          : 太字フラグ ("1" で太字, "0" で通常)
+# lineSpacing   : 行間調整 (マイナス値で詰まる)
+# strokeColor   : 境界線の色 (HEXカラーコード)
+# strokeSize    : 境界線の太さ (0〜16程度)
+# position      : 画面上の配置割合 [X軸, Y軸] (0.5で中央。Yは0.1付近で下部字幕に)
+# shadowColor   : ドロップシャドウの色 (HEXカラーコード)
+# shadowOffset  : 影の距離と方向割合 [X軸, Y軸]
+# shadowBlur    : 影のボケ具合 (1でクッキリ、数値を上げるとボケる)
+# shadowOpacity : 影の不透明度 (0〜100)
+
+[styles."四国めたん"]
+font = "Al Bayan"
+fontSize = "80"
+fontColor = "#ffffff"
+bold = "1"
+lineSpacing = "-50"
+strokeColor = "#000000"
+strokeSize = 16
+position = [0.5, 0.1]
+shadowColor = "#e383c4"          # めたん用のピンク影
+shadowOffset = [0.0052, -0.0111]
+shadowBlur = 1
+shadowOpacity = 100
+
+[styles."ずんだもん"]
+font = "Al Bayan"
+fontSize = "80"
+fontColor = "#ffffff"
+bold = "1"
+lineSpacing = "-50"
+strokeColor = "#000000"
+strokeSize = 16
+position = [0.5, 0.1]
+shadowColor = "#7c9849"          # ずんだもん用の緑影
+shadowOffset = [0.0052, -0.0111]
+shadowBlur = 1
+shadowOpacity = 100
+
+[styles."春日部つむぎ"]
+font = "Al Bayan"
+fontSize = "80"
+fontColor = "#ffffff"
+bold = "1"
+lineSpacing = "-50"
+strokeColor = "#000000"
+strokeSize = 16
+position = [0.5, 0.1]
+shadowColor = "#b1a523"          # つむぎ用の黄色影
+shadowOffset = [0.0052, -0.0111]
+shadowBlur = 1
+shadowOpacity = 100

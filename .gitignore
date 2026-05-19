@@ -1,0 +1,5 @@
+resolve-exporter/outputs/*
+resolve-exporter/voices/*
+.env
+__pycache__/
+.DS_Store
