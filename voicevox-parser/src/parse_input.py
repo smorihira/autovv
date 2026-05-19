@@ -23,6 +23,13 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
 4. 場面転換:
    - 2行以上の連続空白行がある場合、その直前の台詞の後の間(post_pause)を 0.80 に設定する。
 
+5. 速度ブースト:
+   - 前の間(pre_pause)が 0 の台詞は、速度を +0.10 上げる (speed_offset).
+
+6. テキスト正規化:
+   - 半角数字 (0-9) → 全角数字 (０-９)
+   - ピリオド3つ (...) または … → ⋯ (U+22EF)
+
 [入力例]
 - 「「「こんにちは」」」, 0.5, 1.0  -> 玄野武宏, 前0.5s, 後1.0s
 - 「「確かに」」, 0              -> 春日部つむぎ, 前0.0s, 後0.1s(デフォ)
@@ -40,6 +47,9 @@ PAUSE_MIN = 0.00
 PAUSE_MAX = 2.00
 SCENE_BREAK_PAUSE = 0.80
 SPEED_BOOST_ON_ZERO_PRE = 0.10  # pre_pause=0 のとき速度を上げる量
+
+# テキスト正規化用
+_HALFWIDTH_DIGITS = str.maketrans("0123456789", "０１２３４５６７８９")
 
 # キャラクター定義: (開き括弧, 閉じ括弧, キー名)
 # 深い括弧から順に判定する
@@ -106,6 +116,16 @@ def _parse_pause(value: str, default: float = PAUSE_DEFAULT) -> float:
         raise ValueError(f"値 '{value}' を数値に変換できません。")
 
 
+def _normalize_text(text: str) -> str:
+    """テキストの正規化処理を行う"""
+    # 半角数字→全角数字
+    text = text.translate(_HALFWIDTH_DIGITS)
+    # ...（U+2026）や ...（ピリオド3つ）→ ⋯（U+22EF）
+    text = text.replace("\u2026", "\u22ef")
+    text = text.replace("...", "\u22ef")
+    return text
+
+
 def _identify_character(text: str) -> tuple[str, str]:
     """
     括弧の深さからキャラクターを判定し、
@@ -149,6 +169,7 @@ def parse_line(line: str) -> ParsedLine | None:
         )
 
     character, clean_text = _identify_character(text_part)
+    clean_text = _normalize_text(clean_text)
 
     speed_offset = SPEED_BOOST_ON_ZERO_PRE if pre_pause == 0.0 else 0.0
 

@@ -14,7 +14,7 @@
 cd voicevox-parser
 ```
 
-`.env` ファイルを作成し、生成される `.vvproj` の出力先ディレクトリを設定してください。
+`config/.env` ファイルを作成し、生成される `.vvproj` の出力先ディレクトリを設定してください。
 
 ```
 VVPROJ_OUTPUT_DIR=/path/to/your/output/dir
@@ -96,6 +96,21 @@ VOICEVOXエンジンが起動しました。
 「次のシーンの最初の台詞」
 ```
 
+### 速度ブースト
+
+前の間が `0` の台詞は、自動的に速度が **+0.10** 加算されます。  
+前の台詞に食い気味に被せるテンポ感を出すための設定です。
+
+### テキスト正規化
+
+台本中のテキストは以下の変換が自動で適用されます。
+
+| 変換前 | 変換後 | 説明 |
+|---|---|---|
+| `0`～`9`（半角数字） | `０`～`９`（全角数字） | VOICEVOX での読み上げを自然にする |
+| `...`（ピリオド3つ） | `⋯` | 統一された三点リーダ |
+| `…`（U+2026） | `⋯` | 統一された三点リーダ |
+
 ### plot.txt の例
 
 ```
@@ -116,13 +131,15 @@ VOICEVOXエンジンが起動しました。
 ```
 voicevox-parser/
 ├── main.py              # エントリポイント（設定読み込み・オーケストレーション）
-├── parse_input.py       # 入力テキストの解析ロジック
-├── voicevox_api.py      # VOICEVOX エンジン API 通信・エンジン起動/停止
-├── vvproj_builder.py    # .vvproj データ構築・保存
-├── app_control.py       # VOICEVOX GUI の終了・起動制御
-├── characters.toml      # キャラクターごとの style_id・速度設定
 ├── plot.txt             # 入力台本（ここに台本を書く）
-├── .env                 # 出力先ディレクトリの設定
+├── config/
+│   ├── characters.toml  # キャラクターごとの style_id・速度設定
+│   └── .env             # 出力先ディレクトリの設定
+├── src/
+│   ├── parse_input.py   # 入力テキストの解析ロジック
+│   ├── voicevox_api.py  # VOICEVOX エンジン API 通信・エンジン起動/停止
+│   ├── vvproj_builder.py# .vvproj データ構築・保存
+│   └── app_control.py   # VOICEVOX GUI の終了・起動制御
 └── README.md
 ```
 
@@ -148,11 +165,11 @@ style_id = 11
 speed = 1.30
 ```
 
-キーの名前（`metan_amaama`, `zundamon` 等）は `parse_input.py` のキャラクター判定と対応しています。  
+キーの名前（`metan_amaama`, `zundamon` 等）は `src/parse_input.py` のキャラクター判定と対応しています。  
 `style_id` は VOICEVOX のスタイル ID です。VOICEVOX エディタの「設定」や API（`GET /speakers`）で確認できます。
 
 ## 注意事項
 
-- VOICEVOX のインストールパスが `/Applications/VOICEVOX.app` 以外の場合は `voicevox_api.py` の `ENGINE_PATH` を修正してください
-- VOICEVOX エンジンの API はデフォルトで `http://localhost:50021` を使用します（`voicevox_api.py` の `API_BASE`）
-- 生成される `.vvproj` の `appVersion` は `0.24.0` に設定されています（`vvproj_builder.py` の `APP_VERSION`）
+- VOICEVOX のインストールパスが `/Applications/VOICEVOX.app` 以外の場合は `src/voicevox_api.py` の `ENGINE_PATH` を修正してください
+- VOICEVOX エンジンの API はデフォルトで `http://localhost:50021` を使用します（`src/voicevox_api.py` の `API_BASE`）
+- 生成される `.vvproj` の `appVersion` は `0.24.0` に設定されています（`src/vvproj_builder.py` の `APP_VERSION`）

@@ -14,10 +14,10 @@ else:
 
 from pathlib import Path
 
-from app_control import restart_with_project
-from parse_input import parse_lines
-from voicevox_api import ensure_engine
-from vvproj_builder import build_vvproj, save_vvproj
+from src.app_control import restart_with_project
+from src.parse_input import parse_lines
+from src.voicevox_api import ensure_engine
+from src.vvproj_builder import build_vvproj, save_vvproj
 
 # ── 設定 ──────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ _ROOT = Path(__file__).parent
 
 def _load_env() -> None:
     """同階層の .env から環境変数を読み込む"""
-    env_path = _ROOT / ".env"
+    env_path = _ROOT / "config" / ".env"
     if not env_path.exists():
         return
     for line in env_path.read_text().splitlines():
@@ -38,7 +38,7 @@ def _load_env() -> None:
 
 def _load_config() -> dict:
     """characters.toml を読み込む"""
-    config_path = _ROOT / "characters.toml"
+    config_path = _ROOT / "config" / "characters.toml"
     if config_path.exists():
         with open(config_path, "rb") as f:
             return tomllib.load(f)
