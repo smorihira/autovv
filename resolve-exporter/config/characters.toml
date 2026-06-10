@@ -6,7 +6,7 @@
 # overlap_frames : pre_pause=0 のときに前にずらすフレーム数 (0 で無効)
 
 [timeline]
-overlap_frames = 2
+overlap_frames = 3
 
 # [各パラメータの説明]
 # font          : フォント名
