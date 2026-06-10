@@ -21,7 +21,8 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
    - 括弧「」内のカンマはテキストの一部として扱われます。
 
 4. 場面転換:
-   - 2行以上の連続空白行がある場合、その直前の台詞の後の間(post_pause)を 0.80 に設定する。
+   - 2行以上の連続空白行がある場合、その直前の台詞に scene_break フラグを付与する。
+   - resolve-exporter 側で scene_break フラグを参照し、間を挿入する。
 
 5. 速度ブースト:
    - 前の間(pre_pause)が 0 の台詞は、速度を +0.10 上げる (speed_offset).
@@ -32,7 +33,7 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
    - ピリオド3つ (...) または … → ⋯ (U+22EF)
 
 7. メタデータ出力:
-   - build_metadata() で各セリフの pre_pause / post_pause / speed_offset を辞書化する。
+   - build_metadata() で各セリフの pre_pause / post_pause / speed_offset / scene_break を辞書化する。
    - resolve-exporter が参照する voices/<project>/metadata.json として出力される。
    - キーはセリフの連番 ("001", "002", ...) で、WAVファイルの連番と対応する。
 
@@ -51,7 +52,6 @@ from dataclasses import dataclass
 PAUSE_DEFAULT = 0.10
 PAUSE_MIN = 0.00
 PAUSE_MAX = 2.00
-SCENE_BREAK_PAUSE = 0.80
 SPEED_BOOST_ON_ZERO_PRE = 0.10  # pre_pause=0 のとき速度を上げる量
 
 # テキスト正規化用
@@ -82,6 +82,7 @@ class ParsedLine:
     pre_pause: float
     post_pause: float
     speed_offset: float
+    scene_break: bool = False
 
 
 # ── 内部関数 ──────────────────────────────────────────
@@ -211,7 +212,7 @@ def parse_lines(lines: list[str]) -> list[ParsedLine]:
 
         if result is not None:
             if blank_count >= 2 and parsed_items:
-                parsed_items[-1].post_pause = SCENE_BREAK_PAUSE
+                parsed_items[-1].scene_break = True
             parsed_items.append(result)
             # 次のセリフの pre_pause が 0 なら、前のセリフの post_pause も 0 にする
             if result.pre_pause == 0.0 and len(parsed_items) >= 2:
@@ -229,6 +230,7 @@ def build_metadata(parsed_items: list[ParsedLine]) -> dict:
             "pre_pause": item.pre_pause,
             "post_pause": item.post_pause,
             "speed_offset": item.speed_offset,
+            "scene_break": item.scene_break,
         }
         for i, item in enumerate(parsed_items)
     }

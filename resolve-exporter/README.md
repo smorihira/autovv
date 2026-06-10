@@ -56,7 +56,11 @@ python3 main.py <プロジェクト名>
 - 短縮分だけ以降の全クリップが前にずれるため、不自然な間は発生しない
 
 `metadata.json` が存在しない場合はオーバーラップ処理をスキップし、従来通り隙間なく並べる。
+### 場面転換（scene_break）
 
+`metadata.json` で `scene_break` が `true` のセリフの後に、**`scene_break_frames` フレームの Gap** を全トラック（字幕・音声）に挿入する。デフォルトは 18 フレーム。
+
+voicevox-parser 側で plot.txt に 2 行以上の連続空白行があると、その直前のセリフに `scene_break: true` が付与される。
 ## 字幕スタイルの設定
 
 `characters.toml` でキャラクターごとの字幕スタイルを定義する。

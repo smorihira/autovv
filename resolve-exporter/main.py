@@ -63,10 +63,12 @@ def main():
         return
 
     overlap_frames = timeline_config.get("overlap_frames", 2)
+    scene_break_frames = timeline_config.get("scene_break_frames", 18)
 
     timeline = build_timeline(
         project_name, clips, chars, total_frames, style_templates, metadata,
         overlap_frames=overlap_frames,
+        scene_break_frames=scene_break_frames,
     )
 
     os.makedirs(OUTPUTS_DIR, exist_ok=True)

@@ -7,6 +7,7 @@
 
 [timeline]
 overlap_frames = 3
+scene_break_frames = 18
 
 # [各パラメータの説明]
 # font          : フォント名

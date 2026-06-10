@@ -86,7 +86,8 @@ VOICEVOXエンジンが起動しました。
 
 ### 場面転換
 
-2行以上の連続空白行を入れると**場面転換**とみなし、直前の台詞の後の間を **0.80 秒**に自動設定します。  
+2行以上の連続空白行を入れると**場面転換**とみなし、直前の台詞に `scene_break` フラグを付与します。  
+resolve-exporter 側でこのフラグを参照し、セリフ間に指定フレーム数分の Gap を挿入します（デフォルト 18 フレーム）。  
 1行だけの空白行は単に無視されます。
 
 ```
@@ -104,12 +105,12 @@ VOICEVOXエンジンが起動しました。
 ### メタデータ出力
 
 プロジェクト生成時に `voices/<プロジェクト名>/metadata.json` が自動出力されます。  
-このファイルには各セリフの `pre_pause` / `post_pause` / `speed_offset` が含まれ、resolve-exporter が音声のオーバーラップ処理に使用します。
+このファイルには各セリフの `pre_pause` / `post_pause` / `speed_offset` / `scene_break` が含まれ、resolve-exporter が音声のオーバーラップ処理や場面転換の Gap 挿入に使用します。
 
 ```json
 {
-  "001": { "pre_pause": 0.1, "post_pause": 0.1, "speed_offset": 0.0 },
-  "002": { "pre_pause": 0.0, "post_pause": 0.1, "speed_offset": 0.1 }
+  "001": { "pre_pause": 0.1, "post_pause": 0.1, "speed_offset": 0.0, "scene_break": false },
+  "002": { "pre_pause": 0.0, "post_pause": 0.1, "speed_offset": 0.1, "scene_break": false }
 }
 ```
 
@@ -136,7 +137,7 @@ VOICEVOXエンジンが起動しました。
 なんのニュースよ
 ```
 
-この例では「散歩でも行こうよー」の後に空白行が2行あるため、この台詞の後の間が 0.80 秒になります。
+この例では「散歩でも行こうよー」の後に空白行が2行あるため、この台詞に `scene_break` フラグが付与され、resolve-exporter でセリフ間に 18 フレームの Gap が挿入されます。
 
 ## ファイル構成
 

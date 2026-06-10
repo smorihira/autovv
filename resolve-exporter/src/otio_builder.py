@@ -8,7 +8,11 @@ metadata.json が存在し、次のセリフの pre_pause が 0 の場合:
 - 字幕: 短縮された尺でテキストクリップを作成 → テキスト同士の重なりなし
 - 音声: クリップは元のフル尺を維持 → 異なるキャラの音声が overlap_frames フレーム重なる
 - 短縮分だけ以降の全クリップも前にずれる（間が空かない）
-- overlap_frames は characters.toml の [timeline] セクションで設定可能（デフォルト: 2）
+- overlap_frames は characters.toml の [timeline] セクションで設定可発（デフォルト: 2）
+
+[場面転換]
+metadata.json で scene_break が true のクリップの後に、scene_break_frames フレームの Gap を挿入する。
+- scene_break_frames は characters.toml の [timeline] セクションで設定可（デフォルト: 18）
 """
 
 import html
@@ -309,6 +313,12 @@ def _create_audio_clip(clip):
 
 
 
+def _has_scene_break(clip, metadata):
+    """クリップの scene_break が true かどうかを判定する"""
+    info = metadata.get(clip["num"])
+    return info is not None and info.get("scene_break", False)
+
+
 def _has_zero_pre_pause(clip, metadata):
     """クリップの pre_pause が 0 かどうかを判定する"""
     info = metadata.get(clip["num"])
@@ -317,7 +327,7 @@ def _has_zero_pre_pause(clip, metadata):
 
 def build_timeline(
     project_name, clips, chars, total_frames, style_templates, metadata=None,
-    overlap_frames=2,
+    overlap_frames=2, scene_break_frames=18,
 ):
     """OTIO タイムライン全体を構築する"""
     if metadata is None:
@@ -326,13 +336,17 @@ def build_timeline(
     # ── スロット長の計算 ──
     # 次のクリップの pre_pause が 0 なら、このスロットを overlap_frames 短縮する
     slot_durations = []
+    scene_break_after = []  # 各スロットの後に場面転換 Gap を挿入するか
     for i, clip in enumerate(clips):
         dur = clip["duration_frames"]
         if i + 1 < len(clips) and _has_zero_pre_pause(clips[i + 1], metadata):
             dur -= overlap_frames
         slot_durations.append(dur)
+        scene_break_after.append(_has_scene_break(clip, metadata))
 
-    adjusted_total = sum(slot_durations)
+    adjusted_total = sum(slot_durations) + sum(
+        scene_break_frames for sb in scene_break_after if sb
+    )
 
     # ── 字幕トラック (スロット長で統一) ──
     video_tracks = {char: [] for char in chars}
@@ -348,6 +362,10 @@ def build_timeline(
                 )
             else:
                 video_tracks[char].append(_create_gap(slot_durations[i]))
+
+            # 場面転換 Gap を挿入
+            if scene_break_after[i]:
+                video_tracks[char].append(_create_gap(scene_break_frames))
 
     # ── 音声トラック (音声クリップは元の長さを維持、Gapで吸収) ──
     audio_tracks = {char: [] for char in chars}
@@ -367,6 +385,13 @@ def build_timeline(
                 if gap_dur > 0:
                     audio_tracks[char].append(_create_gap(gap_dur))
                 audio_carry[char] = max(0, carry - slot)
+
+            # 場面転換 Gap を挿入
+            if scene_break_after[i]:
+                gap_dur = max(0, scene_break_frames - audio_carry[char])
+                if gap_dur > 0:
+                    audio_tracks[char].append(_create_gap(gap_dur))
+                audio_carry[char] = max(0, audio_carry[char] - scene_break_frames)
 
     track_children = []
 
