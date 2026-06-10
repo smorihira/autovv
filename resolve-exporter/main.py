@@ -30,15 +30,16 @@ CONFIG_PATH = os.path.join(_ROOT, "config", "characters.toml")
 
 
 def _load_style_config():
-    """characters.toml からスタイル設定を読み込む"""
+    """設定ファイルを読み込む"""
     if not os.path.exists(CONFIG_PATH):
-        return {}
+        return {}, {}
     try:
         with open(CONFIG_PATH, "rb") as f:
-            return tomllib.load(f).get("styles", {})
+            config = tomllib.load(f)
+        return config.get("styles", {}), config.get("timeline", {})
     except Exception as e:
         print(f"警告: {CONFIG_PATH} の読み込みに失敗しました。({e})")
-        return {}
+        return {}, {}
 
 
 # ── メイン ────────────────────────────────────────────
@@ -54,14 +55,19 @@ def main():
         print(f"エラー: ディレクトリが見つかりません: {project_dir}")
         return
 
-    style_templates = _load_style_config()
-    clips, chars, total_frames = scan_project(project_dir)
+    style_templates, timeline_config = _load_style_config()
+    clips, chars, total_frames, metadata = scan_project(project_dir)
 
     if not clips:
         print(f"エラー: {project_dir} 内に .wav ファイルがありません。")
         return
 
-    timeline = build_timeline(project_name, clips, chars, total_frames, style_templates)
+    overlap_frames = timeline_config.get("overlap_frames", 2)
+
+    timeline = build_timeline(
+        project_name, clips, chars, total_frames, style_templates, metadata,
+        overlap_frames=overlap_frames,
+    )
 
     os.makedirs(OUTPUTS_DIR, exist_ok=True)
     output_path = os.path.join(OUTPUTS_DIR, f"{project_name}.otio")

@@ -31,6 +31,11 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
    - 半角数字 (0-9) → 全角数字 (０-９)
    - ピリオド3つ (...) または … → ⋯ (U+22EF)
 
+7. メタデータ出力:
+   - build_metadata() で各セリフの pre_pause / post_pause / speed_offset を辞書化する。
+   - resolve-exporter が参照する voices/<project>/metadata.json として出力される。
+   - キーはセリフの連番 ("001", "002", ...) で、WAVファイルの連番と対応する。
+
 [入力例]
 - 「「「こんにちは」」」, 0.5, 1.0  -> 玄野武宏, 前0.5s, 後1.0s
 - 「「確かに」」, 0              -> 春日部つむぎ, 前0.0s, 後0.1s(デフォ)
@@ -215,3 +220,15 @@ def parse_lines(lines: list[str]) -> list[ParsedLine]:
         blank_count = 0
 
     return parsed_items
+
+
+def build_metadata(parsed_items: list[ParsedLine]) -> dict:
+    """ParsedLine リストから resolve-exporter 用メタデータ辞書を生成する"""
+    return {
+        str(i + 1).zfill(3): {
+            "pre_pause": item.pre_pause,
+            "post_pause": item.post_pause,
+            "speed_offset": item.speed_offset,
+        }
+        for i, item in enumerate(parsed_items)
+    }

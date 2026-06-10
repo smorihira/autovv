@@ -1,4 +1,15 @@
-"""OTIO タイムライン・クリップ構築"""
+"""OTIO タイムライン・クリップ構築
+
+字幕トラック・音声トラックはキャラクターごとに分離して生成する。
+
+[音声オーバーラップ]
+metadata.json が存在し、次のセリフの pre_pause が 0 の場合:
+- 前のセリフのスロット (字幕・Gap) を overlap_frames フレーム分短縮する
+- 字幕: 短縮された尺でテキストクリップを作成 → テキスト同士の重なりなし
+- 音声: クリップは元のフル尺を維持 → 異なるキャラの音声が overlap_frames フレーム重なる
+- 短縮分だけ以降の全クリップも前にずれる（間が空かない）
+- overlap_frames は characters.toml の [timeline] セクションで設定可能（デフォルト: 2）
+"""
 
 import html
 
@@ -105,14 +116,15 @@ def _build_title_html(text, style):
     )
 
 
-def _create_text_clip(clip, style):
+def _create_text_clip(clip, style, duration=None):
+    dur = duration if duration is not None else clip["duration_frames"]
     title_html = _build_title_html(clip["text"], style)
 
     return {
         "OTIO_SCHEMA": "Clip.2",
         "metadata": {"Resolve_OTIO": {}},
         "name": "Text",
-        "source_range": _time_range(0, clip["duration_frames"]),
+        "source_range": _time_range(0, dur),
         "effects": [
             _resolve_effect("Transform", 2),
             _resolve_effect("Cropping", 3),
@@ -296,37 +308,85 @@ def _create_audio_clip(clip):
 # ── タイムライン構築 ──────────────────────────────────
 
 
-def build_timeline(project_name, clips, chars, total_frames, style_templates):
-    """OTIO タイムライン全体を構築する"""
-    video_tracks = {char: [] for char in chars}
-    audio_tracks = {char: [] for char in chars}
 
-    for clip in clips:
+def _has_zero_pre_pause(clip, metadata):
+    """クリップの pre_pause が 0 かどうかを判定する"""
+    info = metadata.get(clip["num"])
+    return info is not None and info.get("pre_pause", -1) == 0
+
+
+def build_timeline(
+    project_name, clips, chars, total_frames, style_templates, metadata=None,
+    overlap_frames=2,
+):
+    """OTIO タイムライン全体を構築する"""
+    if metadata is None:
+        metadata = {}
+
+    # ── スロット長の計算 ──
+    # 次のクリップの pre_pause が 0 なら、このスロットを overlap_frames 短縮する
+    slot_durations = []
+    for i, clip in enumerate(clips):
+        dur = clip["duration_frames"]
+        if i + 1 < len(clips) and _has_zero_pre_pause(clips[i + 1], metadata):
+            dur -= overlap_frames
+        slot_durations.append(dur)
+
+    adjusted_total = sum(slot_durations)
+
+    # ── 字幕トラック (スロット長で統一) ──
+    video_tracks = {char: [] for char in chars}
+    for i, clip in enumerate(clips):
         style = DEFAULT_STYLE.copy()
         if clip["char"] in style_templates:
             style.update(style_templates[clip["char"]])
 
-        text_clip = _create_text_clip(clip, style)
-        audio_clip = _create_audio_clip(clip)
-
         for char in chars:
             if char == clip["char"]:
-                video_tracks[char].append(text_clip)
-                audio_tracks[char].append(audio_clip)
+                video_tracks[char].append(
+                    _create_text_clip(clip, style, duration=slot_durations[i])
+                )
             else:
-                video_tracks[char].append(_create_gap(clip["duration_frames"]))
-                audio_tracks[char].append(_create_gap(clip["duration_frames"]))
+                video_tracks[char].append(_create_gap(slot_durations[i]))
+
+    # ── 音声トラック (音声クリップは元の長さを維持、Gapで吸収) ──
+    audio_tracks = {char: [] for char in chars}
+    audio_carry = {char: 0 for char in chars}
+
+    for i, clip in enumerate(clips):
+        slot = slot_durations[i]
+        for char in chars:
+            carry = audio_carry[char]
+            if char == clip["char"]:
+                # 音声クリップ: 元のフル尺を使用 (別トラックとの重なりを作る)
+                audio_tracks[char].append(_create_audio_clip(clip))
+                audio_carry[char] = carry + (clip["duration_frames"] - slot)
+            else:
+                # Gap: carry を吸収して短縮
+                gap_dur = max(0, slot - carry)
+                if gap_dur > 0:
+                    audio_tracks[char].append(_create_gap(gap_dur))
+                audio_carry[char] = max(0, carry - slot)
 
     track_children = []
 
     track_children.append(
-        _build_track("Background", "Video", [_create_gap(total_frames)])
+        _build_track("Background", "Video", [_create_gap(adjusted_total)])
     )
 
     for char in chars:
         track_children.append(
             _build_track(f"Subtitle - {char}", "Video", video_tracks[char])
         )
+
+    track_children.append(
+        _build_track(
+            "Audio (empty)",
+            "Audio",
+            [_create_gap(adjusted_total)],
+            **{"Audio Type": "Mono", "SoloOn": False},
+        )
+    )
 
     for i, char in enumerate(chars, 1):
         track_children.append(

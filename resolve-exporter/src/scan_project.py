@@ -1,5 +1,6 @@
 """プロジェクトディレクトリの WAV ファイル走査・解析"""
 
+import json
 import math
 import os
 import re
@@ -21,11 +22,18 @@ def _parse_filename(filename):
 def scan_project(project_dir):
     """
     WAV ファイルを解析し、
-    (クリップ情報リスト, ユニークキャラクターリスト, 総フレーム数) を返す。
+    (クリップ情報リスト, ユニークキャラクターリスト, 総フレーム数, メタデータ) を返す。
     """
     wav_files = sorted(f for f in os.listdir(project_dir) if f.endswith(".wav"))
     if not wav_files:
-        return [], [], 0
+        return [], [], 0, {}
+
+    # メタデータ読み込み
+    metadata_path = os.path.join(project_dir, "metadata.json")
+    metadata = {}
+    if os.path.exists(metadata_path):
+        with open(metadata_path, "r", encoding="utf-8") as f:
+            metadata = json.load(f)
 
     clips = []
     chars = []
@@ -56,8 +64,9 @@ def scan_project(project_dir):
                 "start_frame": total_frames,
                 "abs_path": os.path.abspath(wav_path),
                 "char": info["char"],
+                "num": info["num"],
             }
         )
         total_frames += duration
 
-    return clips, chars, total_frames
+    return clips, chars, total_frames, metadata

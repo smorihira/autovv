@@ -1,5 +1,6 @@
 """voicevox-parser: テキスト台本から VOICEVOX プロジェクトを生成する"""
 
+import json
 import os
 import sys
 
@@ -15,7 +16,7 @@ else:
 from pathlib import Path
 
 from src.app_control import restart_with_project
-from src.parse_input import parse_lines
+from src.parse_input import build_metadata, parse_lines
 from src.voicevox_api import ensure_engine
 from src.vvproj_builder import build_vvproj, save_vvproj
 
@@ -78,6 +79,14 @@ def main():
     voices_dir = _ROOT.parent / "voices" / project_name
     voices_dir.mkdir(parents=True, exist_ok=True)
     print(f"voices ディレクトリを作成しました: {voices_dir}")
+
+    # resolve-exporter 用のメタデータを出力
+    metadata_path = voices_dir / "metadata.json"
+    metadata_path.write_text(
+        json.dumps(build_metadata(parsed_items), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    print(f"メタデータを出力しました: {metadata_path}")
 
     restart_with_project(file_path, engine_proc)
 
