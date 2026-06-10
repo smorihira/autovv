@@ -25,6 +25,7 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
 
 5. 速度ブースト:
    - 前の間(pre_pause)が 0 の台詞は、速度を +0.10 上げる (speed_offset).
+   - 前の間(pre_pause)が 0 の台詞がある場合、直前の台詞の後の間(post_pause)も自動で 0 になる。
 
 6. テキスト正規化:
    - 半角数字 (0-9) → 全角数字 (０-９)
@@ -207,6 +208,9 @@ def parse_lines(lines: list[str]) -> list[ParsedLine]:
             if blank_count >= 2 and parsed_items:
                 parsed_items[-1].post_pause = SCENE_BREAK_PAUSE
             parsed_items.append(result)
+            # 次のセリフの pre_pause が 0 なら、前のセリフの post_pause も 0 にする
+            if result.pre_pause == 0.0 and len(parsed_items) >= 2:
+                parsed_items[-2].post_pause = 0.0
 
         blank_count = 0
 

@@ -3,3 +3,4 @@ resolve-exporter/outputs/*
 .env
 __pycache__/
 .DS_Store
+voicevox-parser/plot.txt
