@@ -299,7 +299,7 @@ def _create_audio_clip(clip):
 def build_timeline(project_name, clips, chars, total_frames, style_templates):
     """OTIO タイムライン全体を構築する"""
     video_tracks = {char: [] for char in chars}
-    audio_children = []
+    audio_tracks = {char: [] for char in chars}
 
     for clip in clips:
         style = DEFAULT_STYLE.copy()
@@ -307,14 +307,15 @@ def build_timeline(project_name, clips, chars, total_frames, style_templates):
             style.update(style_templates[clip["char"]])
 
         text_clip = _create_text_clip(clip, style)
+        audio_clip = _create_audio_clip(clip)
 
         for char in chars:
             if char == clip["char"]:
                 video_tracks[char].append(text_clip)
+                audio_tracks[char].append(audio_clip)
             else:
                 video_tracks[char].append(_create_gap(clip["duration_frames"]))
-
-        audio_children.append(_create_audio_clip(clip))
+                audio_tracks[char].append(_create_gap(clip["duration_frames"]))
 
     track_children = []
 
@@ -327,14 +328,15 @@ def build_timeline(project_name, clips, chars, total_frames, style_templates):
             _build_track(f"Subtitle - {char}", "Video", video_tracks[char])
         )
 
-    track_children.append(
-        _build_track(
-            "Audio 1",
-            "Audio",
-            audio_children,
-            **{"Audio Type": "Mono", "SoloOn": False},
+    for i, char in enumerate(chars, 1):
+        track_children.append(
+            _build_track(
+                f"Audio {i}",
+                "Audio",
+                audio_tracks[char],
+                **{"Audio Type": "Mono", "SoloOn": False},
+            )
         )
-    )
 
     return {
         "OTIO_SCHEMA": "Timeline.1",
