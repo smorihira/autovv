@@ -60,7 +60,8 @@ python3 main.py <プロジェクト名>
 
 `metadata.json` で `scene_break` が `true` のセリフの後に、**`scene_break_frames` フレームの Gap** を全トラック（字幕・音声）に挿入する。デフォルトは 18 フレーム。
 
-voicevox-parser 側で plot.txt に 2 行以上の連続空白行があると、その直前のセリフに `scene_break: true` が付与される。
+voicevox-parser 側で台本ファイルに 2 行以上の連続空白行があると、その直前のセリフに `scene_break: true` が付与される。
+
 ## 字幕スタイルの設定
 
 `characters.toml` でキャラクターごとの字幕スタイルを定義する。

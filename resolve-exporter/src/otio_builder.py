@@ -8,7 +8,7 @@ metadata.json が存在し、次のセリフの pre_pause が 0 の場合:
 - 字幕: 短縮された尺でテキストクリップを作成 → テキスト同士の重なりなし
 - 音声: クリップは元のフル尺を維持 → 異なるキャラの音声が overlap_frames フレーム重なる
 - 短縮分だけ以降の全クリップも前にずれる（間が空かない）
-- overlap_frames は characters.toml の [timeline] セクションで設定可発（デフォルト: 2）
+- overlap_frames は characters.toml の [timeline] セクションで設定可能（デフォルト: 2）
 
 [場面転換]
 metadata.json で scene_break が true のクリップの後に、scene_break_frames フレームの Gap を挿入する。
