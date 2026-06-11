@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 plots/*
 !plots/sample.txt
+ai_artifacts/*
