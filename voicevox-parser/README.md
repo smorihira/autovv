@@ -1,6 +1,6 @@
 # voicevox-parser
 
-テキストの台本（`plot.txt`）から VOICEVOX プロジェクトファイル（`.vvproj`）を自動生成するツール。  
+テキストの台本（`plots/<プロジェクト名>.txt`）から VOICEVOX プロジェクトファイル（`.vvproj`）を自動生成するツール。  
 
 ## 必要環境
 
@@ -24,20 +24,26 @@ VVPROJ_OUTPUT_DIR=/path/to/your/output/dir
 
 ## 使い方
 
-1. `plot.txt` に台本を記述する
-2. `python3 main.py` を実行
-3. プロジェクト名を入力（ファイル名になる）
+1. `plots/<プロジェクト名>.txt` に台本を記述する（`plots/` はリポジトリルート直下）
+2. `python3 main.py` を実行（または `python3 main.py <プロジェクト名>`）
+3. プロジェクト名を入力（引数で指定した場合はスキップ）
 4. `.vvproj` が生成され、VOICEVOX で自動的に開かれる
 
 ### 実行時の動作
 
 ```
 $ python3 main.py
-plot.txt を読み込み中...
+プロジェクト名を入力してください: my_project
+my_project.txt を読み込み中...
 VOICEVOXエンジンが見つかりません。エンジンを起動します...
 VOICEVOXエンジンが起動しました。
-プロジェクト名を入力してください: my_project
 プロジェクトを作成しました: /path/to/output/my_project.vvproj
+```
+
+コマンドライン引数でも指定可能:
+
+```
+$ python3 main.py my_project
 ```
 
 - VOICEVOX エンジンが未起動の場合、GUI を開かずにエンジンだけバックグラウンドで起動します
@@ -45,7 +51,7 @@ VOICEVOXエンジンが起動しました。
 - VOICEVOX が既に開いている場合は一度終了し（保存ダイアログにも対応）、新しいプロジェクトで開き直します
 - スクリプトが起動したエンジンは、GUI で開く際に自動停止します（GUI が内蔵エンジンを使用するため）
 
-## plot.txt の書き方
+## 台本ファイルの書き方
 
 ### キャラクター指定
 
@@ -124,7 +130,7 @@ resolve-exporter 側でこのフラグを参照し、セリフ間に指定フレ
 | `...`（ピリオド3つ） | `⋯` | 統一された三点リーダ |
 | `…`（U+2026） | `⋯` | 統一された三点リーダ |
 
-### plot.txt の例
+### 台本の例
 
 ```
 「今日はいい天気なのだ」
@@ -144,7 +150,6 @@ resolve-exporter 側でこのフラグを参照し、セリフ間に指定フレ
 ```
 voicevox-parser/
 ├── main.py              # エントリポイント（設定読み込み・オーケストレーション）
-├── plot.txt             # 入力台本（ここに台本を書く）
 ├── config/
 │   ├── characters.toml  # キャラクターごとの style_id・速度設定
 │   └── .env             # 出力先ディレクトリの設定
@@ -154,6 +159,9 @@ voicevox-parser/
 │   ├── vvproj_builder.py# .vvproj データ構築・保存
 │   └── app_control.py   # VOICEVOX GUI の終了・起動制御
 └── README.md
+
+# リポジトリルートに共有ディレクトリ
+plots/                    # 入力台本ディレクトリ（<プロジェクト名>.txt を配置）
 ```
 
 ## characters.toml
