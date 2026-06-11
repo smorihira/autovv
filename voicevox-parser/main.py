@@ -54,12 +54,17 @@ def main():
     config = _load_config()
     output_dir = Path(os.environ.get("VVPROJ_OUTPUT_DIR", "output")).expanduser()
 
-    plot_file = _ROOT / "plot.txt"
+    project_name = (
+        sys.argv[1] if len(sys.argv) > 1 else input("プロジェクト名を入力してください: ").strip()
+    ) or "untitled"
+
+    plots_dir = _ROOT.parent / "plots"
+    plot_file = plots_dir / f"{project_name}.txt"
     if not plot_file.exists():
-        print("エラー: plot.txt が見つかりません。")
+        print(f"エラー: {plot_file} が見つかりません。")
         return
 
-    print("plot.txt を読み込み中...")
+    print(f"{plot_file.name} を読み込み中...")
     engine_proc = ensure_engine()
 
     lines = plot_file.read_text(encoding="utf-8").splitlines()
@@ -68,8 +73,6 @@ def main():
     if not parsed_items:
         print("データがないため終了します。")
         return
-
-    project_name = input("プロジェクト名を入力してください: ").strip() or "untitled"
 
     vvproj_data = build_vvproj(parsed_items, config)
     file_path = save_vvproj(vvproj_data, output_dir, project_name)
