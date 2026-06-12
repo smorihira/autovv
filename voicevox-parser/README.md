@@ -1,6 +1,6 @@
 # voicevox-parser
 
-テキストの台本（`plots/<プロジェクト名>.txt`）から VOICEVOX プロジェクトファイル（`.vvproj`）を自動生成するツール。  
+テキストの台本（`plots/<プロジェクト名>.txt` または `plots/ai_plots/<プロジェクト名>.txt`）から VOICEVOX プロジェクトファイル（`.vvproj`）を自動生成するツール。  
 
 ## 必要環境
 
@@ -24,7 +24,7 @@ VVPROJ_OUTPUT_DIR=/path/to/your/output/dir
 
 ## 使い方
 
-1. `plots/<プロジェクト名>.txt` に台本を記述する（`plots/` はリポジトリルート直下）
+1. `plots/<プロジェクト名>.txt` に台本を記述する（`plots/` はリポジトリルート直下。`plots/ai_plots/` 下の台本も検索対象）
 2. `python3 main.py` を実行（または `python3 main.py <プロジェクト名>`）
 3. プロジェクト名を入力（引数で指定した場合はスキップ）
 4. `.vvproj` が生成され、VOICEVOX で自動的に開かれる
@@ -161,7 +161,7 @@ voicevox-parser/
 └── README.md
 
 # リポジトリルートに共有ディレクトリ
-plots/                    # 入力台本ディレクトリ（<プロジェクト名>.txt を配置）
+plots/                    # 入力台本ディレクトリ（<プロジェクト名>.txt を配置。ai_plots/ サブディレクトリも検索対象）
 ```
 
 ## characters.toml

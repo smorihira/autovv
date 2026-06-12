@@ -59,9 +59,14 @@ def main():
     ) or "untitled"
 
     plots_dir = _ROOT.parent / "plots"
-    plot_file = plots_dir / f"{project_name}.txt"
-    if not plot_file.exists():
-        print(f"エラー: {plot_file} が見つかりません。")
+    search_dirs = [plots_dir, plots_dir / "ai_plots"]
+    plot_file = next(
+        (d / f"{project_name}.txt" for d in search_dirs if (d / f"{project_name}.txt").exists()),
+        None,
+    )
+    if plot_file is None:
+        searched = ", ".join(str(d / f"{project_name}.txt") for d in search_dirs)
+        print(f"エラー: 台本が見つかりません。検索場所: {searched}")
         return
 
     print(f"{plot_file.name} を読み込み中...")
