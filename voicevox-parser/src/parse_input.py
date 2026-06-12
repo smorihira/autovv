@@ -29,8 +29,8 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
    - 前の間(pre_pause)が 0 の台詞がある場合、直前の台詞の後の間(post_pause)も自動で 0 になる。
 
 6. テキスト正規化:
-   - 半角数字 (0-9) → 全角数字 (０-９)
    - ピリオド3つ (...) または … → ⋯ (U+22EF)
+   - 半角英数字・記号・スペース (U+0020〜U+007E) → 対応する全角文字
 
 7. メタデータ出力:
    - build_metadata() で各セリフの pre_pause / post_pause / speed_offset / scene_break を辞書化する。
@@ -55,7 +55,9 @@ PAUSE_MAX = 2.00
 SPEED_BOOST_ON_ZERO_PRE = 0.10  # pre_pause=0 のとき速度を上げる量
 
 # テキスト正規化用
-_HALFWIDTH_DIGITS = str.maketrans("0123456789", "０１２３４５６７８９")
+# 半角英数字・記号 (U+0021〜U+007E) → 全角 (オフセット +0xFEE0)、半角スペースは全角スペースへ
+_HALFWIDTH_TO_FULLWIDTH = {0x20: 0x3000}
+_HALFWIDTH_TO_FULLWIDTH.update({c: c + 0xFEE0 for c in range(0x21, 0x7F)})
 
 # キャラクター定義: (開き括弧, 閉じ括弧, キー名)
 # 深い括弧から順に判定する
@@ -125,11 +127,11 @@ def _parse_pause(value: str, default: float = PAUSE_DEFAULT) -> float:
 
 def _normalize_text(text: str) -> str:
     """テキストの正規化処理を行う"""
-    # 半角数字→全角数字
-    text = text.translate(_HALFWIDTH_DIGITS)
-    # ...（U+2026）や ...（ピリオド3つ）→ ⋯（U+22EF）
+    # ...（U+2026）や ...（ピリオド3つ）→ ⋯（U+22EF）を全角化より先に処理
     text = text.replace("\u2026", "\u22ef")
     text = text.replace("...", "\u22ef")
+    # 半角英数字・記号・スペース→全角
+    text = text.translate(_HALFWIDTH_TO_FULLWIDTH)
     return text
 
 
