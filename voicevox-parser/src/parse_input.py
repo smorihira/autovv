@@ -26,7 +26,7 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
 
 5. 速度ブースト:
    - 前の間(pre_pause)が 0 の台詞は、速度を +0.10 上げる (speed_offset).
-   - 前の間(pre_pause)が 0 の台詞がある場合、直前の台詞の後の間(post_pause)も自動で 0 になる。
+   - 前の間(pre_pause)が 0 の台詞がある場合、直前の台詞の後の間(post_pause)が明示的に指定されていなければ自動で 0 になる.
 
 6. テキスト正規化:
    - ピリオド3つ (...) または … → ⋯ (U+22EF)
@@ -39,7 +39,7 @@ VOICEVOX 入力テキスト解析モジュール (vv-bridge)
 
 [入力例]
 - 「「「こんにちは」」」, 0.5, 1.0  -> 玄野武宏, 前0.5s, 後1.0s
-- 「「確かに」」, 0              -> 春日部つむぎ, 前0.0s, 後0.1s(デフォ)
+- 「「確かに」」, 0              -> 春日部つむぎ, 前0.0s, 後0.1s(デフォ), 速度+0.10
 - 「そうなのだ」,, 2.0           -> ずんだもん, 前0.1s(デフォ), 後2.0s
 - めたんですわ                  -> 四国めたん, 前0.1s(デフォ), 後0.1s(デフォ)
 - （これは読まれません）          -> 無視
@@ -85,6 +85,7 @@ class ParsedLine:
     post_pause: float
     speed_offset: float
     scene_break: bool = False
+    post_pause_specified: bool = False  # post_pause が明示的に指定されたかをトラッキング
 
 
 # ── 内部関数 ──────────────────────────────────────────
@@ -181,6 +182,10 @@ def parse_line(line: str) -> ParsedLine | None:
     clean_text = _normalize_text(clean_text)
 
     speed_offset = SPEED_BOOST_ON_ZERO_PRE if pre_pause == 0.0 else 0.0
+    
+    # post_pause が明示的に指定されたかを判定
+    # (カンマで区切られた3番目の要素が存在して、かつ空でない場合)
+    post_pause_specified = len(pause_parts) > 1 and bool(pause_parts[1].strip())
 
     return ParsedLine(
         character=character,
@@ -188,6 +193,7 @@ def parse_line(line: str) -> ParsedLine | None:
         pre_pause=pre_pause,
         post_pause=post_pause,
         speed_offset=speed_offset,
+        post_pause_specified=post_pause_specified,
     )
 
 
@@ -216,9 +222,11 @@ def parse_lines(lines: list[str]) -> list[ParsedLine]:
             if blank_count >= 2 and parsed_items:
                 parsed_items[-1].scene_break = True
             parsed_items.append(result)
-            # 次のセリフの pre_pause が 0 なら、前のセリフの post_pause も 0 にする
+            # 次のセリフの pre_pause が 0 で、前のセリフの post_pause が明示的に指定されていない場合のみ、
+            # 前のセリフの post_pause を 0 にする
             if result.pre_pause == 0.0 and len(parsed_items) >= 2:
-                parsed_items[-2].post_pause = 0.0
+                if not parsed_items[-2].post_pause_specified:
+                    parsed_items[-2].post_pause = 0.0
 
         blank_count = 0
 
